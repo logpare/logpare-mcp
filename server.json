@@ -1,0 +1,13 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.logpare/logpare-mcp",
+  "description": "Compress repetitive logs 60-90% while preserving diagnostic information for AI agents",
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registry_type": "npm",
+      "identifier": "@logpare/mcp",
+      "version": "0.1.0"
+    }
+  ]
+}
