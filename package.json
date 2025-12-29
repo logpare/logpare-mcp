@@ -1,0 +1,55 @@
+{
+  "name": "@logpare/mcp",
+  "version": "0.1.0",
+  "description": "MCP server for semantic log compression using the Drain algorithm",
+  "type": "module",
+  "mcpName": "io.github.logpare/logpare-mcp",
+  "bin": {
+    "logpare-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "server.json"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "inspect": "pnpm build && npx @modelcontextprotocol/inspector dist/index.js",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "express": "^4.21.0",
+    "logpare": "link:../logpare",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "log",
+    "compression",
+    "llm",
+    "context-window",
+    "drain",
+    "claude",
+    "cursor"
+  ],
+  "author": "Jeff Green <contact@hirejeffgreen.com>",
+  "homepage": "https://github.com/logpare/logpare-mcp",
+  "bugs": {
+    "url": "https://github.com/logpare/logpare-mcp/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/logpare/logpare-mcp.git"
+  },
+  "license": "MIT"
+}
