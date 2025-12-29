@@ -1,6 +1,6 @@
 {
   "name": "@logpare/mcp",
-  "version": "0.1.0",
+  "version": "0.0.2",
   "description": "MCP server for semantic log compression using the Drain algorithm",
   "type": "module",
   "mcpName": "io.github.logpare/logpare-mcp",
@@ -14,13 +14,14 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
     "inspect": "pnpm build && npx @modelcontextprotocol/inspector dist/index.js",
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1",
     "express": "^4.21.0",
-    "logpare": "link:../logpare",
+    "logpare": "^0.0.4",
     "zod": "^3.25.0"
   },
   "devDependencies": {

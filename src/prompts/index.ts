@@ -10,15 +10,15 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 export function registerPrompts(server: McpServer): void {
   // Prompt: diagnose_errors
   // Systematic error analysis of compressed logs
-  server.prompt(
+  server.registerPrompt(
     'diagnose_errors',
     {
       title: 'Error Diagnosis',
       description: 'Systematic analysis of error patterns in compressed logs',
-    },
-    {
-      compressed_output: z.string().describe('Output from compress_logs tool'),
-      focus_area: z.string().optional().describe('Specific error type to focus on (optional)'),
+      argsSchema: {
+        compressed_output: z.string().describe('Output from compress_logs tool'),
+        focus_area: z.string().optional().describe('Specific error type to focus on (optional)'),
+      },
     },
     ({ compressed_output, focus_area }) => ({
       messages: [
@@ -42,15 +42,15 @@ export function registerPrompts(server: McpServer): void {
 
   // Prompt: find_root_cause
   // Correlate error templates with stack traces
-  server.prompt(
+  server.registerPrompt(
     'find_root_cause',
     {
       title: 'Root Cause Analysis',
       description: 'Correlate error templates with stack traces to identify root causes',
-    },
-    {
-      templates: z.string().describe('Error templates from compression'),
-      stack_traces: z.string().describe('Related stack trace patterns'),
+      argsSchema: {
+        templates: z.string().describe('Error templates from compression'),
+        stack_traces: z.string().describe('Related stack trace patterns'),
+      },
     },
     ({ templates, stack_traces }) => ({
       messages: [
@@ -75,14 +75,14 @@ export function registerPrompts(server: McpServer): void {
 
   // Prompt: performance_analysis
   // Analyze performance violation patterns
-  server.prompt(
+  server.registerPrompt(
     'performance_analysis',
     {
       title: 'Performance Analysis',
       description: 'Analyze performance violation patterns from compressed logs',
-    },
-    {
-      performance_patterns: z.string().describe('Performance-related templates from compression'),
+      argsSchema: {
+        performance_patterns: z.string().describe('Performance-related templates from compression'),
+      },
     },
     ({ performance_patterns }) => ({
       messages: [
@@ -105,14 +105,14 @@ export function registerPrompts(server: McpServer): void {
 
   // Prompt: summarize_logs
   // General log summary and insights
-  server.prompt(
+  server.registerPrompt(
     'summarize_logs',
     {
       title: 'Log Summary',
       description: 'Generate a comprehensive summary and insights from compressed logs',
-    },
-    {
-      compressed_output: z.string().describe('Output from compress_logs tool'),
+      argsSchema: {
+        compressed_output: z.string().describe('Output from compress_logs tool'),
+      },
     },
     ({ compressed_output }) => ({
       messages: [

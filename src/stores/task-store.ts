@@ -42,6 +42,14 @@ export interface TaskResult {
     inputLines: number;
     uniqueTemplates: number;
     estimatedTokenReduction: number;
+    summary: {
+      userImpactingErrors: number;
+      expectedFailures: number;
+      performanceViolations: number;
+      otherWarnings: number;
+      infoPatterns: number;
+      stackTracePatterns: number;
+    };
     templates: Array<{
       id: string;
       pattern: string;
