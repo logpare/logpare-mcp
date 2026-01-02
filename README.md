@@ -116,6 +116,9 @@ The default "smart" format is optimized for LLM diagnostic workflows:
 - **Stack frame correlation** — Associates errors with related stack traces
 - **File activity summaries** — Shows most active source files
 - **Hydrated examples** — Displays actual values instead of `<*>` placeholders
+- **Duration extraction** — Shows timing values (e.g., "80ms", "1.5s") with min/max/avg
+- **Status code mapping** — Maps HTTP codes to human-readable labels
+- **Correlation ID display** — Shows first 8 chars of trace/request IDs
 
 ## Resources
 

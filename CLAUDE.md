@@ -153,7 +153,7 @@ Task states: `working` → `completed` | `failed` | `cancelled`
 - `MCP_TRANSPORT`: `stdio` (default) or `http`
 - `MCP_PORT`: HTTP server port (default: 3000)
 
-### logpare API
+### logpare API (v0.0.5)
 ```typescript
 import { compressText, createDrain } from 'logpare';
 
@@ -181,5 +181,24 @@ Result structure:
     estimatedTokenReduction: number;
   };
   formatted: string;
+}
+```
+
+Template structure (v0.0.5):
+```typescript
+interface Template {
+  id: string;
+  pattern: string;              // Log template with <*> placeholders
+  occurrences: number;
+  sampleVariables: string[][];  // Up to 3 sample values per variable
+  firstSeen: number;            // Line number
+  lastSeen: number;
+  severity: 'error' | 'warning' | 'info';
+  isStackFrame: boolean;
+  urlSamples: string[];         // Extracted hostnames
+  fullUrlSamples: string[];     // Complete URLs with paths
+  statusCodeSamples: number[];  // HTTP status codes (200, 404, etc.)
+  correlationIdSamples: string[]; // Trace/request IDs
+  durationSamples: string[];    // Timing values (e.g., "80ms", "1.5s")
 }
 ```
