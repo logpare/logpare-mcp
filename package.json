@@ -1,6 +1,6 @@
 {
   "name": "@logpare/mcp",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "MCP server for semantic log compression using the Drain algorithm",
   "type": "module",
   "mcpName": "io.github.logpare/logpare-mcp",
