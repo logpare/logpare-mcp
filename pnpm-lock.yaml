@@ -15,8 +15,8 @@ importers:
         specifier: ^4.21.0
         version: 4.22.1
       logpare:
-        specifier: ^0.0.4
-        version: 0.0.4
+        specifier: ^0.0.5
+        version: 0.0.5
       zod:
         specifier: ^3.25.0
         version: 3.25.76
@@ -671,8 +671,8 @@ packages:
     resolution: {integrity: sha512-IXO6OCs9yg8tMKzfPZ1YmheJbZCiEsnBdcB03l0OcfK9prKnJb96siuHCr5Fl37/yo9DnKU+TLpxzTUspw9shg==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  logpare@0.0.4:
-    resolution: {integrity: sha512-2mYF3VcwqIMPhpHfrXF2cwACy8RfDVqeLtvp1/pGC6uft7OUqcOaQXHpii8C/gQ8Ypy0BLbAQpruOk27Gkjeuw==}
+  logpare@0.0.5:
+    resolution: {integrity: sha512-LmZ3r4GirmdqgILBT/a12HAYluvxOQtELQD5HcCsMPhv9+UiCjf3dHjlFzYgJ9eM8kApayYUepKy49wuISDxgA==}
     engines: {node: ^20.0.0 || ^22.0.0 || >=24.0.0}
     hasBin: true
 
@@ -1602,7 +1602,7 @@ snapshots:
 
   load-tsconfig@0.2.5: {}
 
-  logpare@0.0.4: {}
+  logpare@0.0.5: {}
 
   magic-string@0.30.21:
     dependencies:

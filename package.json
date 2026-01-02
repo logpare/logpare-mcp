@@ -21,7 +21,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1",
     "express": "^4.21.0",
-    "logpare": "^0.0.4",
+    "logpare": "^0.0.5",
     "zod": "^3.25.0"
   },
   "devDependencies": {
