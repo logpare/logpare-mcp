@@ -86,7 +86,7 @@ function enrichTemplate(t: Template) {
     // New extraction fields
     statusCodeSamples: t.statusCodeSamples || [],
     correlationIdSamples: t.correlationIdSamples || [],
-    durationSamples: (t as any).durationSamples || [],
+    durationSamples: t.durationSamples || [],
     // Numeric range if applicable
     numericRange: numericRange
       ? {
@@ -134,7 +134,8 @@ function compressSync(args: CompressLogsArgs): ToolResult {
   } = args;
 
   try {
-    // For 'smart' format, use 'detailed' internally to get all template data
+    // 'smart' format is MCP-specific; internally use 'detailed' from logpare
+    // and post-process with formatSmart() for LLM-optimized output
     const internalFormat = format === 'smart' ? 'detailed' : format;
 
     const result = compressText(logs, {
@@ -205,84 +206,96 @@ function startAsyncCompression(args: CompressLogsArgs): ToolResult {
   const task = taskStore.create();
   const taskId = task.taskId;
 
-  // Run compression in background
+  // Run compression in background with error boundary
   setImmediate(() => {
-    // Check for cancellation before starting
-    if (taskStore.isCancelled(taskId)) {
-      return;
-    }
+    (async () => {
+      // Check for cancellation before starting
+      if (taskStore.isCancelled(taskId)) {
+        return;
+      }
 
-    const startTime = performance.now();
-    const {
-      logs,
-      format = 'smart',
-      max_templates = 50,
-      depth,
-      threshold,
-    } = args;
+      const startTime = performance.now();
+      const {
+        logs,
+        format = 'smart',
+        max_templates = 50,
+        depth,
+        threshold,
+      } = args;
 
-    try {
-      // For 'smart' format, use 'detailed' internally to get all template data
-      const internalFormat = format === 'smart' ? 'detailed' : format;
+      try {
+        // 'smart' format is MCP-specific; internally use 'detailed' from logpare
+        // and post-process with formatSmart() for LLM-optimized output
+        const internalFormat = format === 'smart' ? 'detailed' : format;
 
-      const result = compressText(logs, {
-        format: internalFormat,
-        maxTemplates: max_templates,
-        drain: {
-          ...(depth !== undefined && { depth }),
-          ...(threshold !== undefined && { simThreshold: threshold }),
-          // Wire progress callback to task store
-          onProgress: (event: ProgressEvent) => {
-            // Check for cancellation during processing
-            if (taskStore.isCancelled(taskId)) {
-              // Note: We can't actually stop the Drain algorithm mid-processing,
-              // but we can stop updating progress and skip completion
-              return;
-            }
-            taskStore.updateProgress(taskId, mapProgress(event));
+        const result = compressText(logs, {
+          format: internalFormat,
+          maxTemplates: max_templates,
+          drain: {
+            ...(depth !== undefined && { depth }),
+            ...(threshold !== undefined && { simThreshold: threshold }),
+            // Wire progress callback to task store
+            onProgress: (event: ProgressEvent) => {
+              // Check for cancellation during processing
+              if (taskStore.isCancelled(taskId)) {
+                // Note: We can't actually stop the Drain algorithm mid-processing,
+                // but we can stop updating progress and skip completion
+                return;
+              }
+              taskStore.updateProgress(taskId, mapProgress(event));
+            },
           },
-        },
-      });
+        });
 
-      // Apply smart formatting if requested
-      const outputText =
-        format === 'smart'
-          ? formatSmart(result.templates, result.stats)
-          : result.formatted;
+        // Apply smart formatting if requested
+        const outputText =
+          format === 'smart'
+            ? formatSmart(result.templates, result.stats)
+            : result.formatted;
 
-      const processingTimeMs = Math.round(performance.now() - startTime);
-      const limitedTemplates = result.templates.slice(0, max_templates);
+        const processingTimeMs = Math.round(performance.now() - startTime);
+        const limitedTemplates = result.templates.slice(0, max_templates);
 
-      // Check for cancellation before completing
-      if (taskStore.isCancelled(taskId)) {
-        return;
+        // Check for cancellation before completing
+        if (taskStore.isCancelled(taskId)) {
+          return;
+        }
+
+        const taskResult: TaskResult = {
+          content: [{ type: 'text', text: outputText }],
+          structuredContent: {
+            compressionRatio: result.stats.compressionRatio,
+            inputLines: result.stats.inputLines,
+            uniqueTemplates: result.stats.uniqueTemplates,
+            estimatedTokenReduction: result.stats.estimatedTokenReduction,
+            summary: generateSummary(result.templates),
+            templates: limitedTemplates.map(enrichTemplate),
+            processingTimeMs,
+          },
+        };
+
+        taskStore.complete(taskId, taskResult);
+      } catch (error) {
+        // Don't report errors for cancelled tasks
+        if (taskStore.isCancelled(taskId)) {
+          return;
+        }
+        const message = error instanceof Error ? error.message : 'Unknown error';
+
+        // Determine specific error code based on error type
+        let code = 'COMPRESSION_FAILED';
+        if (message.includes('empty') || message.includes('invalid')) {
+          code = 'INVALID_INPUT';
+        } else if (message.includes('memory') || message.includes('heap')) {
+          code = 'INPUT_TOO_LARGE';
+        }
+
+        taskStore.fail(taskId, { code, message });
       }
-
-      const taskResult: TaskResult = {
-        content: [{ type: 'text', text: outputText }],
-        structuredContent: {
-          compressionRatio: result.stats.compressionRatio,
-          inputLines: result.stats.inputLines,
-          uniqueTemplates: result.stats.uniqueTemplates,
-          estimatedTokenReduction: result.stats.estimatedTokenReduction,
-          summary: generateSummary(result.templates),
-          templates: limitedTemplates.map(enrichTemplate),
-          processingTimeMs,
-        },
-      };
-
-      taskStore.complete(taskId, taskResult);
-    } catch (error) {
-      // Don't report errors for cancelled tasks
-      if (taskStore.isCancelled(taskId)) {
-        return;
-      }
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      taskStore.fail(taskId, {
-        code: 'COMPRESSION_FAILED',
-        message,
-      });
-    }
+    })().catch((error) => {
+      // Ultimate fallback - should never reach here
+      console.error('[logpare-mcp] Unexpected error in async compression:', error);
+    });
   });
 
   return {
