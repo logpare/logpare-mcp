@@ -1,0 +1,37 @@
+# Cursor Rules for logpare-mcp
+
+## Documentation Updates
+
+After making any code changes, always update the relevant documentation:
+
+1. **CLAUDE.md** - Update when changing:
+   - Tool parameters or behavior
+   - API usage patterns
+   - Project structure
+   - Dependencies or versions
+   - logpare library integration
+
+2. **README.md** - Update when changing:
+   - Tool parameters or new features
+   - Installation instructions
+   - Usage examples
+   - Smart format capabilities
+
+3. **Inline comments** - Update when changing:
+   - Complex logic that requires explanation
+   - Type definitions that users interact with
+
+## Dependency Updates
+
+When updating the `logpare` dependency:
+- Check for new Template fields and update type usage
+- Review new exported utilities that could simplify code
+- Update CLAUDE.md "logpare API" section with new interfaces
+- Test with `pnpm typecheck && pnpm build`
+
+## Code Style
+
+- Use snake_case for MCP tool names (per SEP-986)
+- Never log to stdout (corrupts JSON-RPC) - use console.error() only
+- Return errors as results with `isError: true`, don't throw
+- Use Zod schemas for all tool parameters
