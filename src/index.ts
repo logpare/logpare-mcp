@@ -2,6 +2,12 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[logpare-mcp] Unhandled rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
 import {
   compressLogsSchema,
   compressLogsDescription,
@@ -21,10 +27,13 @@ import {
   type EstimateCompressionArgs,
 } from './tools/estimate.js';
 import { taskStore } from './stores/task-store.js';
-import { createHttpTransport, closeAllSessions } from './transports/http.js';
+import { createHttpTransport, type HttpSessionManager } from './transports/http.js';
 import { registerResources } from './resources/index.js';
 import { registerPrompts } from './prompts/index.js';
 import { noopAuthMiddleware } from './middleware/auth.js';
+
+// HTTP session manager (set when using HTTP transport)
+let httpSessionManager: HttpSessionManager | null = null;
 
 /**
  * Transport mode: 'stdio' (default) or 'http'
@@ -83,6 +92,7 @@ server.tool(
       .describe('Force async task-based processing'),
   },
   async (args) => {
+    // Args validated by Zod schema; cast is safe
     const result = handleCompressLogs(args as CompressLogsArgs);
     return {
       content: result.content,
@@ -106,6 +116,7 @@ server.tool(
       .describe('Maximum templates to return (default: 20)'),
   },
   async (args) => {
+    // Args validated by Zod schema; cast is safe
     const result = handleAnalyzeLogPatterns(args as AnalyzeLogPatternsArgs);
     return {
       content: result.content,
@@ -122,6 +133,7 @@ server.tool(
     logs: z.string().describe('Raw log content to estimate compression for'),
   },
   async (args) => {
+    // Args validated by Zod schema; cast is safe
     const result = handleEstimateCompression(args as EstimateCompressionArgs);
     return {
       content: result.content,
@@ -136,28 +148,34 @@ registerResources(server);
 // Register MCP prompts (diagnostic templates for LLM interactions)
 registerPrompts(server);
 
-// Cleanup on exit
-process.on('SIGINT', () => {
-  taskStore.destroy();
-  if (TRANSPORT_MODE === 'http') {
-    closeAllSessions();
-  }
-  process.exit(0);
-});
+// Graceful shutdown with timeout
+const SHUTDOWN_TIMEOUT_MS = 5000;
 
-process.on('SIGTERM', () => {
+function gracefulShutdown() {
+  console.error('[logpare-mcp] Shutting down...');
+
+  const forceExit = setTimeout(() => {
+    console.error('[logpare-mcp] Forcing exit after timeout');
+    process.exit(1);
+  }, SHUTDOWN_TIMEOUT_MS);
+
   taskStore.destroy();
-  if (TRANSPORT_MODE === 'http') {
-    closeAllSessions();
+  if (httpSessionManager) {
+    httpSessionManager.closeAllSessions();
   }
+
+  clearTimeout(forceExit);
   process.exit(0);
-});
+}
+
+process.on('SIGINT', gracefulShutdown);
+process.on('SIGTERM', gracefulShutdown);
 
 // Start the server with selected transport
 // CRITICAL: Never log to stdout in stdio mode (corrupts JSON-RPC)
 if (TRANSPORT_MODE === 'http') {
   // HTTP streaming transport for remote/async use cases
-  await createHttpTransport(server, {
+  httpSessionManager = await createHttpTransport(server, {
     authMiddleware: noopAuthMiddleware,
   });
   console.error('[logpare-mcp] Server started with HTTP transport');
