@@ -14,7 +14,7 @@ export interface TaskProgress {
   statusMessage: string;
 
   /** Current processing phase */
-  currentPhase: 'parsing' | 'clustering' | 'categorizing' | 'formatting' | 'finalizing';
+  currentPhase: 'parsing' | 'clustering' | 'finalizing';
 
   /** Number of lines processed so far */
   processedLines?: number;
@@ -68,6 +68,10 @@ export interface TaskError {
 function generateId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 11)}`;
 }
+
+// Maximum absolute lifetime for any task (30 minutes)
+// Prevents tasks from living indefinitely via frequent updates
+const MAX_TASK_LIFETIME_MS = 30 * 60 * 1000;
 
 export class TaskStore {
   private tasks: Map<string, TaskState> = new Map();
@@ -196,15 +200,28 @@ export class TaskStore {
     const now = Date.now();
     const expired: string[] = [];
 
-    this.tasks.forEach((task, taskId) => {
-      const createdMs = new Date(task.createdAt).getTime();
-      if (now - createdMs > task.ttl) {
+    // Use Array.from to create snapshot of entries (prevents race condition)
+    for (const [taskId, task] of Array.from(this.tasks.entries())) {
+      const createdAtMs = new Date(task.createdAt).getTime();
+
+      // Check absolute lifetime first (prevents indefinite survival via updates)
+      if (now - createdAtMs > MAX_TASK_LIFETIME_MS) {
+        expired.push(taskId);
+        continue;
+      }
+
+      // Use lastUpdatedAt for working tasks (sliding window TTL)
+      const referenceTime = task.status === 'working'
+        ? new Date(task.lastUpdatedAt).getTime()
+        : createdAtMs;
+
+      if (now - referenceTime > task.ttl) {
         expired.push(taskId);
       }
-    });
+    }
 
     for (const taskId of expired) {
-      this.delete(taskId);
+      this.tasks.delete(taskId);
     }
   }
 
