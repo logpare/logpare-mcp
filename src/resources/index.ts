@@ -21,6 +21,10 @@ export function registerResources(server: McpServer): void {
       mimeType: 'application/json',
     },
     async (uri, { taskId }) => {
+      if (!taskId) {
+        throw new Error('Invalid resource URI: missing task ID');
+      }
+
       const task = taskStore.get(taskId as string);
 
       if (!task) {
@@ -68,6 +72,10 @@ export function registerResources(server: McpServer): void {
       mimeType: 'application/json',
     },
     async (uri, { taskId }) => {
+      if (!taskId) {
+        throw new Error('Invalid resource URI: missing task ID');
+      }
+
       const task = taskStore.get(taskId as string);
 
       if (!task) {
@@ -113,6 +121,10 @@ export function registerResources(server: McpServer): void {
       mimeType: 'application/json',
     },
     async (uri, { taskId }) => {
+      if (!taskId) {
+        throw new Error('Invalid resource URI: missing task ID');
+      }
+
       const task = taskStore.get(taskId as string);
 
       if (!task) {

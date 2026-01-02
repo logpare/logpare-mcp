@@ -356,7 +356,7 @@ export function formatSmart(
   // Durations summary
   const allDurations = new Set<string>();
   templates.forEach((t) => {
-    ((t as any).durationSamples || []).forEach((d: string) => allDurations.add(d));
+    (t.durationSamples || []).forEach((d) => allDurations.add(d));
   });
   if (allDurations.size > 0) {
     lines.push('## DURATIONS');
@@ -443,7 +443,7 @@ function formatPerformanceTemplate(t: Template): string {
   const parts: string[] = [];
 
   // Use durationSamples if available (preferred), otherwise fall back to sampleVariables
-  const durations = (t as any).durationSamples || [];
+  const durations = t.durationSamples || [];
 
   if (durations.length > 0) {
     // Parse duration samples to get min/max
